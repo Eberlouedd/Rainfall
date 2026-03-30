@@ -16,12 +16,12 @@ public:
         memcpy(this->annotation, str, strlen(str));
     }
 
-    int operator+(N &other)
+    virtual int operator+(N &other)
     {
         return this->value + other.value;
     }
 
-    int operator-(N &other)
+    virtual int operator-(N &other)
     {
         return this->value - other.value;
     }

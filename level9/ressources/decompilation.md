@@ -90,3 +90,6 @@ donc
 a->setAnnotation(argv[1]);
 
 
+return (**(int (__cdecl ***)(N *, N *))v4)(v4, v6);
+
+v4 est l'objet b est il est cast avec deux pointeur pour acceder a la fonction dans la vtable
