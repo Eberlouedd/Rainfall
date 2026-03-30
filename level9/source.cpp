@@ -3,50 +3,39 @@
 
 class N {
 public:
-    N(int32_t* arg1);
-    void setAnnotation(const char* arg1);
-    int32_t operator+(N& other);
-    int32_t operator-(N& other);
+    int value;
+    char annotation[100];
 
-private:
-    void* _vtable_for_N;
-    int32_t* _some_data;
-};
-
-N::N(int32_t* arg1) {
-    _vtable_for_N = nullptr;
-    _some_data = arg1 + 0x68;
-}
-
-void N::setAnnotation(const char* arg1) {
-    char* annotationData;
-    annotationData = new char[strlen(arg1) + 1];
-    memcpy(annotationData, arg1, strlen(arg1) + 1);
-}
-
-int32_t N::operator+(N& other) {
-    return *(this->_some_data) + *(other._some_data);
-}
-
-// Opérateur - : soustraction de deux objets N
-int32_t N::operator-(N& other) {
-    return *(this->_some_data) - *(other._some_data);
-}
-
-int32_t main(int32_t argc, char** argv, char** envp) {
-    if (argc <= 1) {
-        _exit(1);
+    N(int v)
+    {
+        this->value = v;
     }
 
-    int32_t* eax = new int32_t[0x6C / sizeof(int32_t)];
-    N obj1(eax);
+    void setAnnotation(char *str)
+    {
+        memcpy(this->annotation, str, strlen(str));
+    }
 
-    int32_t* eax_1 = new int32_t[0x6C / sizeof(int32_t)];
-    N obj2(eax_1);
+    int operator+(N &other)
+    {
+        return this->value + other.value;
+    }
 
-    obj1.setAnnotation(argv[1]);
+    int operator-(N &other)
+    {
+        return this->value - other.value;
+    }
+};
 
-    int32_t result = obj1 + obj2;
+int main(int argc, char **argv)
+{
+    if (argc <= 1)
+        exit(1);
 
-    return result;
+    N *a = new N(5);
+    N *b = new N(6);
+
+    a->setAnnotation(argv[1]);
+
+    return *b + *a;
 }
