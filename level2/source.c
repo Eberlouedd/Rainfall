@@ -19,8 +19,6 @@ void p(void)
   return;
 }
 
-
-
 void main(void)
 
 {

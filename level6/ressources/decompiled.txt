@@ -5,10 +5,10 @@ void main(undefined4 param_1,int param_2)
   char *__dest;
   undefined4 *puVar1;
   
-  __dest = malloc(0x40);
-  puVar1 = malloc(4);
-  *puVar1 = m;
-  strcpy(__dest,*(char **)(param_2 + 4));
-  (*(code *)*puVar1)();
+  __dest = malloc(0x40);                  // Alloue 64 octets (0x40) pour stocker l'entree utilisateur
+  puVar1 = malloc(4);                     // Alloue 4 octets pour stocker un pointeur de fonction (32 bits)
+  *puVar1 = m;                            // Met l'adresse de la fonction m dans ce pointeur
+  strcpy(__dest,*(char **)(param_2 + 4)); // Copie argv[1] dans __dest sans verifier la taille, argv[0] est au début de argv. Donc argv[1] est 4 octets plus loin, d’où param_2 + 4.
+  (*(code *)*puVar1)();                   // Appelle la fonction pointee (normalement m)
   return;
 }

