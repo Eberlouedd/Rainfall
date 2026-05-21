@@ -10,12 +10,12 @@ Il y a une faille apparente : on peut copier avec `memcpy` l'équivalent de 4 fo
 
 Sauf que 9*4 = 36 : on peut copier au maximum 36 octets dans `dest`, ce qui ne permet pas d'overflower `dest` (taille 40). Mais il existe un moyen de contourner ceci :
 
-On sait que le 3ᵉ argument de `memcpy` est un `size_t` : c'est un entier non signé, donc la valeur maximale est 4294967295.
+On sait que le 3ᵉ argument de `memcpy` est un `size_t` : c'est un entier non signé, donc la valeur maximale est 4294967296.
 
-On sait que lorsqu'on dépasse la plage de la taille permise, un modulo 4294967295 est appliqué.
+On sait que lorsqu'on dépasse la plage de la taille permise, un modulo 4294967296 est appliqué.
 
 Donc on prend le plus petit `int` possible -2147483637, on le multiplie par 4 ce qui donne -8589934548. Si on essaye de le mettre dans un `size_t`,
-il y aura un modulo 4294967295 donc : -8589934548 modulo 4294967295 = 44.
+il y aura un modulo 4294967296 donc : -8589934548 modulo 4294967296 = 44.
 
 C'est super : cela signifie qu'on peut overflower `dest`.
 
