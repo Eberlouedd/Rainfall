@@ -6,7 +6,7 @@ On commence par ouvrir le binaire dans Ghidra  pour inspecter la fonction `main`
 En lisant le pseudo-code décompilé, on remarque la logique suivante :
 - le programme attend un argument en ligne de commande ;
 - cet argument est converti en entier et eststocke dans `password` ;
-- si la valeur correspond à `423`, le programme lance un shell via `system`/`exec*` avec les droits du propriétaire du binaire (ici `level1` si le binaire est SUID).
+- si la valeur correspond à `423`, le programme lance un shell via `system`/`exec*` avec les droits du propriétaire du binaire.
 
 #### Etape 02 :
 On exécute simplement le programme avec la bonne valeur :

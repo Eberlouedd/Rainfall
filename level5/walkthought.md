@@ -38,7 +38,7 @@ Adresse cible a ecraser (celle d'`exit()` dans GOT) : `0x08049838`.
 On recupere l'adresse de la fonction `o` :
 
 ```bash
-gdb -q ./level5
+gdb ./level5
 (gdb) info function o
 ```
 

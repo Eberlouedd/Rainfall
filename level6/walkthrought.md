@@ -27,13 +27,15 @@ Apres test, l'offset correct est `72`.
 Exemple de test das gdb :
 
 ```bash
-./level6 $(python -c 'print "e" * 72')
+(gdb) r $(python -c 'print "e" * 74')
 ```
 
 #### Etape 04 :
 
 On recupere l'adresse de `n()` :
-
+```
+(gdb) disas n
+```
 ```text
 0x08048454
 ```

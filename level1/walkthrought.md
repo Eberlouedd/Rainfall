@@ -30,8 +30,6 @@ GDB indique un segfault à l'adresse `0xb7006565`.
 Le motif `65` correspond au caractère `e`, ce qui montre que 2 octets de RET sont écrasés.
 Donc l'offset de RET est : `78 - 2 = 76` octets.
 
-On valide notre hypothes, ca segfault a partir de 76.
-
 #### Etape 03 :
 
 On trouve l'adresse de `run()` avec :

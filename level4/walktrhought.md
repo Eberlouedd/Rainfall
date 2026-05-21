@@ -9,7 +9,7 @@ On ne peut donc pas simplement ecrire une petite valeur avec `%n`.
 
 #### Etape 02 :
 
-On recupere l'adresse de `m` avec `gdb` (ou `ghidra`) :
+On recupere l'adresse de `m` avec `gdb`:
 
 ```bash
 p &m
